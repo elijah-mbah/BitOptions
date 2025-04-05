@@ -131,3 +131,43 @@
         next-id: (var-get next-option-id)
     }
 )
+
+;; Public Functions
+(define-public (create-option (sbtc-token <ft-trait>) (option-type (string-ascii 4)) (strike-price uint) (premium uint) (collateral uint) (expiry uint))
+    (let
+        (
+            (option-id (var-get next-option-id))
+            (current-height block-height)
+        )
+        ;; Input validation
+        (asserts! (is-valid-option-type option-type) ERR-INVALID-OPTION-TYPE)
+        (try! (validate-strike-price strike-price))
+        (try! (validate-amounts premium collateral))
+        (try! (check-expiry expiry))
+        
+        ;; Transfer collateral from writer to contract
+        (try! (transfer-sbtc sbtc-token collateral tx-sender (as-contract tx-sender)))
+        
+        ;; Create new option
+        (map-set Options
+            { option-id: option-id }
+            {
+                writer: tx-sender,
+                holder: tx-sender,
+                option-type: option-type,
+                strike-price: strike-price,
+                premium: premium,
+                collateral: collateral,
+                expiry: expiry,
+                exercised: false,
+                created-at: current-height
+            }
+        )
+        
+        ;; Update contract state
+        (var-set next-option-id (+ option-id u1))
+        (var-set total-options-created (+ (var-get total-options-created) u1))
+        
+        (ok option-id)
+    )
+)
