@@ -87,9 +87,9 @@
 
 (define-private (check-expiry (expiry uint))
     (let
-        ((min-expiry (+ block-height MIN-EXPIRY-BLOCKS)))
+        ((min-expiry (+ stacks-block-height MIN-EXPIRY-BLOCKS)))
         (asserts! (>= expiry min-expiry) ERR-EXPIRY-TOO-SOON)
-        (asserts! (> expiry block-height) ERR-OPTION-EXPIRED)
+        (asserts! (> expiry stacks-block-height) ERR-OPTION-EXPIRED)
         (ok true)
     )
 )
@@ -137,7 +137,7 @@
     (let
         (
             (option-id (var-get next-option-id))
-            (current-height block-height)
+            (current-height stacks-block-height)
         )
         ;; Input validation
         (asserts! (is-valid-option-type option-type) ERR-INVALID-OPTION-TYPE)
@@ -201,7 +201,7 @@
         
         ;; Validations
         (asserts! (is-eq tx-sender (get holder option)) ERR-NOT-AUTHORIZED)
-        (asserts! (< block-height (get expiry option)) ERR-OPTION-EXPIRED)
+        (asserts! (< stacks-block-height (get expiry option)) ERR-OPTION-EXPIRED)
         (asserts! (not (get exercised option)) ERR-ALREADY-EXERCISED)
         
         ;; Exercise logic based on option type
@@ -230,7 +230,7 @@
         ((option (unwrap! (get-option option-id) ERR-OPTION-NOT-FOUND)))
         
         ;; Validations
-        (asserts! (>= block-height (get expiry option)) ERR-NOT-EXPIRED)
+        (asserts! (>= stacks-block-height (get expiry option)) ERR-NOT-EXPIRED)
         (asserts! (not (get exercised option)) ERR-ALREADY-EXERCISED)
         (asserts! (is-eq tx-sender (get writer option)) ERR-NOT-AUTHORIZED)
         
