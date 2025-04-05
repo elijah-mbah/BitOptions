@@ -48,3 +48,48 @@
 (define-data-var next-option-id uint u1)
 (define-data-var total-options-created uint u0)
 (define-data-var total-options-exercised uint u0)
+
+;; Data Maps
+(define-map Options
+    { option-id: uint }
+    {
+        writer: principal,
+        holder: principal,
+        option-type: (string-ascii 4),
+        strike-price: uint,
+        premium: uint,
+        collateral: uint,
+        expiry: uint,
+        exercised: bool,
+        created-at: uint
+    }
+)
+
+(define-map UserBalances
+    { user: principal }
+    { balance: uint }
+)
+
+;; Private Functions
+(define-private (is-valid-option-type (option-type (string-ascii 4)))
+    (or 
+        (is-eq option-type OPTION-TYPE-CALL)
+        (is-eq option-type OPTION-TYPE-PUT)
+    )
+)
+
+(define-private (transfer-sbtc (token <ft-trait>) (amount uint) (sender principal) (recipient principal))
+    (begin
+        (asserts! (> amount u0) ERR-ZERO-AMOUNT)
+        (contract-call? token transfer amount sender recipient none)
+    )
+)
+
+(define-private (check-expiry (expiry uint))
+    (let
+        ((min-expiry (+ block-height MIN-EXPIRY-BLOCKS)))
+        (asserts! (>= expiry min-expiry) ERR-EXPIRY-TOO-SOON)
+        (asserts! (> expiry block-height) ERR-OPTION-EXPIRED)
+        (ok true)
+    )
+)
